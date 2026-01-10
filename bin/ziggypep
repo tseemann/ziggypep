@@ -1,0 +1,76 @@
+#!/usr/bin/env perl
+use 5.32.0;
+use strict;
+use warnings;
+use Getopt::Std;
+use File::Basename;
+use IO::Uncompress::AnyUncompress qw(anyuncompress $AnyUncompressError);
+use IO::Handle;
+
+#......................................................................................
+our $VERSION = "0.0.1";
+our $EXE = basename($0);
+our $URL = 'https://github.com/tseemann/ziggypep';
+#......................................................................................
+sub usage {
+  my($errcode) = @_;
+  $errcode ||= 0;
+  my $ofh = $errcode ? \*STDERR : \*STDOUT;
+  print $ofh 
+    "NAME\n  $EXE $VERSION\n",
+    "SYNOPSIS\n  Identify signal peptides in bacterial proteins\n",
+    "USAGE\n  $EXE [opts] proteins.faa[.gz,bz2]\n",
+    "OPTIONS\n",
+    "  -h       Print this help\n",
+    "  -v       Print version and exit\n",
+    "  -C       Show citation and exit\n",
+    "  -q       No output while running, only errors\n",
+    "HOMEPAGE\n  $URL\n",
+    "END\n";
+  exit($errcode);
+}
+#......................................................................................
+sub version { 
+  say "$EXE $VERSION"; 
+  exit(0); 
+}
+#......................................................................................
+
+sub citation {
+  say "Seemann T (2026), '$EXE' Github $URL";
+  exit(0);
+}
+
+#......................................................................................
+
+my %opt;
+getopts('vhqC', \%opt) or exit(-1);
+$opt{'v'} and version();
+$opt{'C'} and citation();
+$opt{'h'} and usage(0);
+@ARGV or usage(1);
+
+#......................................................................................
+sub msg { print STDERR "@_\n" unless $opt{'q'}; }
+sub wrn { msg("WARNING:", @_); }
+sub err { print STDERR "ERROR: @_\n"; exit(-1); }
+#......................................................................................
+
+msg("This is $EXE $VERSION");
+
+my $unzip = IO::Uncompress::AnyUncompress->new(
+  \*ARGV,
+  'MultiStream' => 1,  # fix Issue #34
+  'Transparent'  => 1, # allow non-compressed data 
+) 
+or err("Can't open input stream");
+
+while (<$unzip>) {
+  say $_ if m/^>/;
+}
+
+msg("Done.");
+exit(0);
+
+#......................................................................................
+
