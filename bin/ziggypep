@@ -9,7 +9,7 @@ use IO::Uncompress::AnyUncompress qw(anyuncompress $AnyUncompressError);
 use Data::Dumper;
 
 #......................................................................................
-my $VERSION = "0.3.0";
+my $VERSION = "0.3.1";
 my $EXE = basename($0);
 my $URL = 'https://github.com/tseemann/ziggypep';
 #......................................................................................
@@ -31,7 +31,7 @@ sub usage {
     "  -v       Print version and exit\n",
     "  -C       Show citation and exit\n",
     "  -q       No output while running, only errors\n",
-    "  -s       Print results just when sig_peptide found  j\n",
+    "  -s       Only print postive results\n",
     "HOMEPAGE\n  $URL\n",
     "END\n";
   exit($errcode);
