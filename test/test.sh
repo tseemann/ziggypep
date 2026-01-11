@@ -27,3 +27,11 @@ setup () {
 @test "Bad option" {
   run ! $exe --doesnotexist
 }
+@test "Normal input" {
+  run -0 $exe prot.faa
+  [[ "$output" =~ "NIRS_PSEST" ]]
+}
+@test "Gzipped input" {
+  run -0 $exe prot.faa
+  [[ "$output" =~ "NIRS_PSEST" ]]
+}

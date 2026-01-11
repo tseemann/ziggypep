@@ -35,42 +35,38 @@ sub version {
   exit(0); 
 }
 #......................................................................................
-
 sub citation {
   say "Seemann T (2026), '$EXE' Github $URL";
   exit(0);
 }
-
 #......................................................................................
-
 my %opt;
+sub msg { print STDERR "@_\n" unless $opt{'q'}; }
+sub wrn { msg("WARNING:", @_); }
+sub err { print STDERR "ERROR: @_\n"; exit(-1); }
+#......................................................................................
 getopts('vhqC', \%opt) or exit(-1);
 $opt{'v'} and version();
 $opt{'C'} and citation();
 $opt{'h'} and usage(0);
 @ARGV or usage(1);
-
 #......................................................................................
-sub msg { print STDERR "@_\n" unless $opt{'q'}; }
-sub wrn { msg("WARNING:", @_); }
-sub err { print STDERR "ERROR: @_\n"; exit(-1); }
-#......................................................................................
-
 msg("This is $EXE $VERSION");
 
-my $unzip = IO::Uncompress::AnyUncompress->new(
-  \*ARGV,
-  'MultiStream' => 1,  # fix Issue #34
-  'Transparent'  => 1, # allow non-compressed data 
-) 
-or err("Can't open input stream");
+for my $infile (@ARGV) {
+  my $unzip = IO::Uncompress::AnyUncompress->new(
+    $infile,
+    'MultiStream' => 1,  # in case it's block zipped
+    'Transparent'  => 1, # allow non-compressed data 
+  ) 
+  or err("Can't open: $infile");
 
-while (<$unzip>) {
-  say $_ if m/^>/;
+  while (<$unzip>) {
+    print $_ if m/^>/;
+  }
 }
 
 msg("Done.");
 exit(0);
 
 #......................................................................................
-
