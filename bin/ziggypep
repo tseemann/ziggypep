@@ -2,15 +2,21 @@
 use 5.32.0;
 use strict;
 use warnings;
+use List::Util qw(min max);
 use Getopt::Std;
 use File::Basename;
 use IO::Uncompress::AnyUncompress qw(anyuncompress $AnyUncompressError);
-use IO::Handle;
+use Data::Dumper;
 
 #......................................................................................
-our $VERSION = "0.0.2";
-our $EXE = basename($0);
-our $URL = 'https://github.com/tseemann/ziggypep';
+my $VERSION = "0.3.0";
+my $EXE = basename($0);
+my $URL = 'https://github.com/tseemann/ziggypep';
+#......................................................................................
+my $AMINO = 'AFILMPVWCGNQSTUYHKRDEX';
+#my @SIGPEP = (map { chomp; $_ } <DATA> );
+#my $SIGMAX = max( map { length($_) } @SIGPEP) ;
+my $SIGMAX = 50;
 #......................................................................................
 sub usage {
   my($errcode) = @_;
@@ -25,6 +31,7 @@ sub usage {
     "  -v       Print version and exit\n",
     "  -C       Show citation and exit\n",
     "  -q       No output while running, only errors\n",
+    "  -s       Print results just when sig_peptide found  j\n",
     "HOMEPAGE\n  $URL\n",
     "END\n";
   exit($errcode);
@@ -45,13 +52,14 @@ sub msg { print STDERR "@_\n" unless $opt{'q'}; }
 sub wrn { msg("WARNING:", @_); }
 sub err { print STDERR "ERROR: @_\n"; exit(-1); }
 #......................................................................................
-getopts('vhqC', \%opt) or exit(-1);
+getopts('vhqCs', \%opt) or exit(-1);
 $opt{'v'} and version();
 $opt{'C'} and citation();
 $opt{'h'} and usage(0);
 @ARGV or usage(1);
 #......................................................................................
 msg("This is $EXE $VERSION");
+#msg("Loaded",0+@SIGPEP,"models, max length $SIGMAX");
 
 for my $infile (@ARGV) {
   my $unzip = IO::Uncompress::AnyUncompress->new(
@@ -61,12 +69,86 @@ for my $infile (@ARGV) {
   ) 
   or err("Can't open: $infile");
 
-  while (<$unzip>) {
-    print $_ if m/^>/;
+  my $prots = load_fasta($$unzip);
+  @$prots or err("No sequences found in: $infile");
+  my $have = 0;
+  
+  for my $seq (@$prots) {
+    my $aa = substr( $seq->[1], 0, $SIGMAX );
+    wrn($seq->[0],"has non-[$AMINO] chars - ${aa}...") if $aa =~ m/[^$AMINO]/;
+    $seq->[1] =~ s/[^$AMINO]/X/g;
+    wrn($seq->[0],"does not start with M - ${aa}...") unless $aa =~ m/^M/i;
+    my $pos = predict_signal_peptide_end( $aa );
+    $have++ if $pos > 0;
+    say join "\t", 
+      $seq->[0],,$pos, substr($aa, 0, $pos)
+        unless $pos<=0 && $opt{'s'};
   }
+  msg("Found $have sig_peptide in",
+    0+@$prots,"proteins from $infile");
 }
-
 msg("Done.");
 exit(0);
 
+#......................................................................................
+sub load_fasta {
+  my($fh) = @_;
+  my @seq;
+  while (<$fh>) {
+    chomp;
+    if (m/^\s*>(\S+)/) {
+      push @seq, [ $1, '' ];
+    }
+    else {
+      @seq or err("Error parsing FASTA");
+      $seq[-1]->[1] .= uc($_);
+    }
+  }
+  msg("Loaded", 0+@seq, "sequences.");
+  return \@seq;
+}
+#......................................................................................
+sub predict_signal_peptide_end {
+  my ($aa) = @_;
+
+  my $len = length($aa);
+  my $h_start = -1;
+
+  # 1. Locate hydrophobic core (h-region) 
+  #    within the first 30 residues
+  for (my $i = 0; $i <= 20 && $i + 10 <= $len; $i++) {
+    my $window = substr($aa, $i, 10);
+    
+    # count hydrophobic: I,V,L,F,M,W,A
+    if (($window =~ tr/IVLFMWA//) >= 8) {
+      $h_start = $i;
+      last;
+    }
+  }
+
+  # Return 0 if no core is detected
+  return 0 if $h_start == -1;
+
+  # 2. Locate cleavage site (-3, -1 rule)
+  # Look in the region following the hydrophobic core
+  my $h_end = $h_start + 10;
+  
+  for (my $j = $h_end; $j < $h_end + 12 && $j + 1 < $len; $j++) {
+    my $p3 = substr($aa, $j-2, 1);
+    my $p1 = substr($aa, $j,   1);
+
+    # Small, neutral residues at -3 and -1 positions (von Heijne rule)
+    if ($p3 =~ /[AGSCTV]/ && $p1 =~ /[AGSCTV]/) {
+      return $j + 1; # 1-based position of the last signal residue
+    }
+  }
+  # Return 0 if h-region found but no valid cleavage site detected
+  return 0;
+}
+#......................................................................................
+sub aa2hmp {
+  my($aa) = @_;
+  $aa =~ tr/AFILMPVWCGNQSTUYHKRDEX/HHHHHHHHPPPPPPPPXSSSNN/;
+  return $aa;
+}
 #......................................................................................

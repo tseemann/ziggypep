@@ -3,6 +3,10 @@ channels:
   - bioconda
 dependencies:
   - perl >=5.32
-  - perl-path-tiny
+  - seqkit
+  - csvtk
   - make
   - bats-core
+  - zlib
+  - bzip2
+

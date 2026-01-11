@@ -10,16 +10,21 @@ WGET := wget --continue
 DAT := uniprot_sprot_bacteria.dat.gz
 FASTA := uniprot_sprot.fasta.gz
 
-all : signal.faa
+all : signal.raw
 
 # >sp|Q6GZX4|001R_FRG3G Putative tr
 # ^          ^^^^^^^^^^ ^^^^^^^^^^^
+
+signal.raw : signal.faa
+	paste - - < $< | cut -f 2 > $@
 
 signal.faa : signal.fasta signal.tsv
 	seqkit fx2tab --only-id $< \
 	| cut -f1,2 \
 	| csvtk join -t -f 1 $(word 2,$^) /dev/stdin \
-	| awk '{ print ">" $$1 " " $$2 "aa signal peptide" "\n" substr($$3,1,$$2) }' \
+	| awk '{ print ">" $$1 ".sigpep." $$2 " " $$2 "aa signal peptide" "\n" substr($$3,1,$$2) }' \
+	| seqkit rmdup -s \
+	| seqkit sort --by-length -w 0 \
 	> $@
 
 signal.fasta : signal.ids $(FASTA)
