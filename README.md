@@ -101,7 +101,11 @@ I like the name
 a family member with that name, I love 
 [David Bowie's](https://en.wikipedia.org/wiki/David_Bowie) 
 [Zigg Stardust](https://en.wikipedia.org/wiki/Ziggy_Stardust_(character)),
-and Ziggy was the 
+Also, it rhymes with 
+[Iggy Pop](https://en.wikipedia.org/wiki/Iggy_Pop)
+who is also a rock legend who worked with Bowie in
+his early career.
+Ziggy was the 
 ["A.I"](https://en.wikipedia.org/wiki/List_of_Quantum_Leap_(1989_TV_series)_characters#Ziggy)
 in the classic 1989 sci-fi series 
 [Quantum Leap](https://en.wikipedia.org/wiki/Quantum_Leap_(1989_TV_series)).
