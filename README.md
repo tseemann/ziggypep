@@ -100,7 +100,7 @@ I like the name
 ["Ziggy"](https://en.wiktionary.org/wiki/Ziggy) - I have
 a family member with that name, I love 
 [David Bowie's](https://en.wikipedia.org/wiki/David_Bowie) 
-[Zigg Stardust](https://en.wikipedia.org/wiki/Ziggy_Stardust_(character)),
+[Ziggy Stardust](https://en.wikipedia.org/wiki/Ziggy_Stardust_(character)),
 Also, it rhymes with 
 [Iggy Pop](https://en.wikipedia.org/wiki/Iggy_Pop)
 who is also a rock legend who worked with Bowie in
